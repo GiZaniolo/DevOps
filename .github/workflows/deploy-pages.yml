@@ -1,0 +1,30 @@
+name: CD — Deploy GitHub Pages
+
+on:
+  push:
+    branches: [ 'principal' ]
+  pull_request:
+    branches: [ 'principal' ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v3
+
+      - name: Empacotar artefato (pasta do site)
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: .
+
+      - name: Realizar deploy para GitHub Pages
+        uses: actions/deploy-pages@v1
