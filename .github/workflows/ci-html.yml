@@ -1,1 +1,21 @@
+name: CI — Validar HTML
+
+on:
+  push:
+    branches: [ 'principal', 'desenvolvimento' ]
+  pull_request:
+    branches: [ 'principal' ]
+
+jobs:
+  validate-html:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar HTML Tidy
+        run: sudo apt-get update && sudo apt-get install -y tidy
+
+      - name: Validar index.html
+        run: tidy -e index.html
 
