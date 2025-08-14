@@ -1,30 +1,48 @@
-name: CD — Deploy GitHub Pages
+name: CD — Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [ 'principal' ]
+  # Roda na PR para aparecer o check de CD (só build)
   pull_request:
-    branches: [ 'principal' ]
+    branches: [principal, main]
+  # Roda no push para principal/main (build + deploy de fato)
+  push:
+    branches: [principal, main]
 
+# Permissões exigidas pelo Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Evita deploys concorrentes
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  build-and-deploy:
+  # 1) CAIXINHA 1 — build (gera o artefato do site)
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Preparar GitHub Pages
-        uses: actions/configure-pages@v3
-
-      - name: Empacotar artefato (pasta do site)
-        uses: actions/upload-pages-artifact@v1
+      # Se você tiver uma pasta específica, mude o path:
+      # Ex.: path: ./site  ou ./public
+      - name: Upload artifact (site)
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ./
 
-      - name: Realizar deploy para GitHub Pages
-        uses: actions/deploy-pages@v1
+  # 2) CAIXINHA 2 — deploy (só roda em push para principal/main)
+  deploy:
+    # Só faz deploy quando for push para principal/main
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/principal')
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
