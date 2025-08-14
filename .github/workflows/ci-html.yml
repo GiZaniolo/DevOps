@@ -1,56 +1,36 @@
-name: CI — Validar HTML
+name: CI - Validação de código
 
 on:
   push:
-    branches: [ 'principal', 'desenvolvimento' ]
+    branches: [ main ]
   pull_request:
-    branches: [ 'principal' ]
+    branches: [ main ]
 
 jobs:
-  validate-html:
+  lint-and-links:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Instalar HTML Tidy
-        run: sudo apt-get update && sudo apt-get install -y tidy
-
-      - name: Validar index.html
-        run: tidy -e index.html
-name: CI HTML
-
-on:
-  push:
-    branches:
-      - principal
-      - desenvolvimento
-  pull_request:
-    branches:
-      - principal
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repositório
-        uses: actions/checkout@v3
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js (para htmlhint)
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Instalar dependências
-        run: npm install
+      - name: Instalar HTMLHint
+        run: npm install -g htmlhint
 
-      - name: Rodar testes HTML
-        run: npm run test-html
+      - name: Validar HTML
+        run: |
+          # Valida todos os arquivos HTML do repo (ignora node_modules por padrão)
+          htmlhint "**/*.html"
 
-      - name: Publicar no GitHub Pages
-        if: github.ref == 'refs/heads/principal'
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Verificar links quebrados (Lychee)
+        uses: lycheeverse/lychee-action@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          # Verifica links em todos os HTML (e Markdown, se houver)
+          args: --no-progress --verbose "**/*.html" "**/*.md"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
